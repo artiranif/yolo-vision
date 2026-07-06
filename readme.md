@@ -1,0 +1,5 @@
+This project has as goal to make a comparison between different yolo models to see their performance in terms of accuracy and speed. This is for an academic project, so the code is not optimized for production use. The models used in this project are YOLOv5, YOLOv8, YOLOv10, and YOLOv26. The comparison will be done using a dataset of images and the results will be presented in terms of mAP (mean Average Precision) and FPS (Frames Per Second).
+
+------------------------
+## French Translation
+Ce projet a pour objectif de faire une comparaison entre différents modèles YOLO afin d'évaluer leurs performances en termes de précision et de vitesse. Il s'agit d'un projet académique, donc le code n'est pas optimisé pour une utilisation en production. Les modèles utilisés dans ce projet sont YOLOv5, YOLOv8, YOLOv10 et YOLOv26. La comparaison sera effectuée à l'aide d'un ensemble de données d'images et les résultats seront présentés en termes de mAP (moyenne de la précision) et de FPS (images par seconde).
