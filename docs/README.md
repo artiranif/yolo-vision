@@ -20,7 +20,7 @@ dépôt. Il reprend et enrichit le contenu de ce dossier :
   référence vs run amélioré : AdamW, augmentations avancées,
   fine-tuning en 2 phases)
 - mise en forme et navigation par sections
-- discussion critique reformulée pour l'oral
+- discussion critique intégrée au corps du rapport
 
 Ce dossier est conservé pour tracer l'origine des données, des
 sources académiques et du raisonnement analytique du projet.
