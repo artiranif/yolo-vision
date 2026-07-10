@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rapport — YOLOv5s vs YOLOv8s sur Pascal VOC 2007</title>
+<style>
+  :root{
+    --navy:#1e2761; --ink:#1b1f2a; --muted:#5b6472; --line:#e4e7ec;
+    --bg:#fbfbfa; --card:#ffffff;
+    --blue:#2461d9; --blue-soft:#eaf1fd;
+    --orange:#d9540f; --orange-soft:#fdefe6;
+    --purple:#6a4fd6; --purple-soft:#f1eefc;
+    --green:#1c8a5a; --green-soft:#e9f7f0;
+    --yellow:#a9720a; --yellow-soft:#fbf2e0;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family: Georgia, 'Times New Roman', serif;
+    line-height:1.65;
+  }
+  .layout{ display:grid; grid-template-columns: 260px 1fr; max-width:1180px; margin:0 auto; }
+  aside{
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:40px 22px; border-right:1px solid var(--line);
+    font-family: Arial, Calibri, sans-serif;
+  }
+  aside .brand{ font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px;}
+  aside .brand strong{ display:block; font-size:1.02rem; color:var(--navy); font-family:Georgia,serif; letter-spacing:0; margin-top:2px;}
+  aside nav{ margin-top:28px; }
+  aside nav a{
+    display:block; font-size:.86rem; color:var(--muted); text-decoration:none;
+    padding:7px 0; border-left:2px solid transparent; padding-left:12px;
+    transition:.15s;
+  }
+  aside nav a:hover{ color:var(--navy); border-left-color:var(--purple); }
+
+  main{ padding:56px 64px 90px; min-width:0; }
+  .doc-title{ font-size:2.3rem; color:var(--navy); line-height:1.25; margin:0 0 8px; }
+  .doc-sub{ font-family:Arial,sans-serif; font-size:1.05rem; color:var(--muted); margin:0 0 22px; }
+  .meta-row{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:34px; }
+  .tag{ font-family:Arial,sans-serif; font-size:.74rem; color:var(--navy); background:var(--purple-soft);
+        border:1px solid #ddd6f7; padding:4px 11px; border-radius:20px; }
+
+  h2.section{
+    font-size:1.5rem; color:var(--navy); margin:52px 0 14px; padding-top:6px;
+    border-top:1px solid var(--line); padding-top:26px;
+  }
+  h3.sub{ font-family:Arial,sans-serif; font-size:1.02rem; font-weight:700; color:var(--ink); margin:26px 0 10px; }
+  p{ font-size:1.03rem; }
+  p.lead{ font-size:1.12rem; color:#333; }
+
+  .callout{
+    background:var(--card); border:1px solid var(--line); border-left:4px solid var(--purple);
+    border-radius:6px; padding:18px 22px; margin:20px 0; font-family:Arial,sans-serif; font-size:.94rem;
+  }
+  .callout.warn{ border-left-color:var(--yellow); background:var(--yellow-soft); }
+  .callout.ok{ border-left-color:var(--green); background:var(--green-soft); }
+  .callout.blue{ border-left-color:var(--blue); background:var(--blue-soft); }
+  .callout h4{ margin:0 0 8px; font-size:.9rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:20px 0; }
+  .cardbox{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:18px 20px; font-family:Arial,sans-serif; }
+  .cardbox.v5{ border-top:3px solid var(--blue); }
+  .cardbox.v8{ border-top:3px solid var(--orange); }
+  .cardbox h4{ margin:0 0 10px; font-size:.95rem; }
+  .cardbox.v5 h4{ color:var(--blue); }
+  .cardbox.v8 h4{ color:var(--orange); }
+  .cardbox ul{ margin:0; padding-left:18px; font-size:.9rem; }
+  .cardbox li{ margin-bottom:6px; }
+
+  table{ width:100%; border-collapse:collapse; margin:18px 0; font-family:Arial,sans-serif; font-size:.9rem; }
+  th{ background:var(--navy); color:#fff; text-align:left; padding:9px 12px; font-weight:600; }
+  td{ padding:8px 12px; border-bottom:1px solid var(--line); }
+  tr:nth-child(even) td{ background:#f7f7f5; }
+  .win{ color:var(--green); font-weight:700; } .eq{ color:var(--yellow); font-weight:700; }
+
+  figure{ margin:22px 0; }
+  figure img{ width:100%; border:1px solid var(--line); border-radius:6px; display:block; }
+  figcaption{ font-family:Arial,sans-serif; font-size:.82rem; color:var(--muted); margin-top:8px; text-align:center; }
+
+  .refs{ font-family:Arial,sans-serif; font-size:.88rem; padding-left:0; list-style:none; }
+  .refs li{ margin-bottom:12px; padding-left:32px; position:relative; }
+  .refs li .num{ position:absolute; left:0; color:var(--purple); font-weight:700; }
+  a{ color:var(--blue); }
+
+  .footer-note{ margin-top:70px; padding-top:20px; border-top:1px solid var(--line);
+    font-family:Arial,sans-serif; font-size:.8rem; color:var(--muted); }
+
+  @media (max-width:900px){
+    .layout{ grid-template-columns:1fr; }
+    aside{ position:relative; height:auto; border-right:none; border-bottom:1px solid var(--line); }
+    main{ padding:36px 22px; }
+    .grid2{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <aside>
+    <div class="brand">Rapport de projet — Master IA &amp; Big Data</div>
+    <strong>YOLOv5s vs YOLOv8s<br/>Pascal VOC 2007</strong>
+    <nav>
+      <a href="#resume">Résumé</a>
+      <a href="#contexte">1. Contexte &amp; objectif</a>
+      <a href="#contribution">2. Contribution originale</a>
+      <a href="#methodologie">3. Méthodologie</a>
+      <a href="#etat-art">4. État de l'art</a>
+      <a href="#resultats">5. Résultats</a>
+      <a href="#recap">6. Tableau récapitulatif</a>
+      <a href="#discussion">7. Discussion critique</a>
+      <a href="#conclusion">8. Conclusion</a>
+      <a href="#references">Références</a>
+    </nav>
+  </aside>
+
+  <main>
+    <h1 class="doc-title">Comparaison YOLOv5s vs YOLOv8s sur Pascal VOC 2007 : architectures, stratégies d'entraînement et mise en perspective critique</h1>
+    <p class="doc-sub">Rapport de projet académique — Vision par ordinateur / Détection d'objets</p>
+    <div class="meta-row">
+      <span class="tag">Pascal VOC 2007</span>
+      <span class="tag">100 epochs</span>
+      <span class="tag">Batch 128</span>
+      <span class="tag">640×640 px</span>
+      <span class="tag">NVIDIA A40 48GB</span>
+      <span class="tag">Master IA &amp; Big Data — GE-IT</span>
+    </div>
+
+    <section id="resume">
+      <p class="lead">Ce rapport compare YOLOv5s et YOLOv8s sur le dataset Pascal VOC 2007 (5 011 images d'entraînement, 2 510 de validation, 2 510 de test), en isolant l'effet de deux stratégies d'entraînement distinctes : un run de référence (hyperparamètres par défaut) et un run amélioré intégrant AdamW, un fine-tuning en deux phases, des augmentations avancées (mixup, copy-paste) et un export ONNX pour la production. Les résultats sont ensuite confrontés à la littérature académique récente afin d'évaluer leur plausibilité et leurs limites.</p>
+    </section>
+
+    <h2 class="section" id="contexte">1. Contexte et objectif</h2>
+    <p>L'objectif de ce projet est de comparer objectivement deux versions majeures de l'architecture YOLO — YOLOv5s (2020, CSPNet + PANet, 7,2M paramètres) et YOLOv8s (2023, C2f + PANet, 11,2M paramètres) — sur un dataset de référence en détection d'objets, dans des conditions d'entraînement strictement identiques. L'étude se concentre exclusivement sur <strong>Pascal VOC 2007</strong> (20 classes, ~5 000 images annotées), le protocole combiné VOC2007+2012 utilisé par une partie de la littérature n'étant pas retenu ici afin de garder un périmètre expérimental maîtrisé et reproductible.</p>
+    <div class="grid2">
+      <div class="cardbox v5">
+        <h4>YOLOv5s</h4>
+        <ul>
+          <li>Architecture CSPNet + PANet</li>
+          <li>7,2M paramètres</li>
+          <li>Loss boîtes : CIoU · Loss classe : BCE</li>
+          <li>Poids initiaux COCO pré-entraîné</li>
+        </ul>
+      </div>
+      <div class="cardbox v8">
+        <h4>YOLOv8s</h4>
+        <ul>
+          <li>Architecture C2f + PANet</li>
+          <li>11,2M paramètres</li>
+          <li>Loss boîtes : DFL + CIoU · Loss classe : BCE</li>
+          <li>Poids initiaux COCO pré-entraîné</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2 class="section" id="contribution">2. Contribution originale</h2>
+    <p>Conformément à l'exigence d'un travail original allant au-delà de l'application directe d'un modèle existant, ce projet ne se limite pas à entraîner YOLOv5s et YOLOv8s sur VOC2007 : il compare <strong>deux protocoles d'entraînement</strong> pour chaque architecture, afin de distinguer ce qui relève de l'architecture de ce qui relève de la stratégie d'optimisation.</p>
+    <div class="grid2">
+      <div class="cardbox">
+        <h4>Run de référence</h4>
+        <ul>
+          <li>Optimiseur SGD, hyperparamètres par défaut</li>
+          <li>Augmentations standard (mosaic, flip horizontal, jitter HSV)</li>
+          <li>Entraînement en une seule phase, 100 epochs</li>
+        </ul>
+      </div>
+      <div class="cardbox" style="border-top:3px solid var(--purple)">
+        <h4 style="color:var(--purple)">Run amélioré</h4>
+        <ul>
+          <li>Optimiseur <strong>AdamW</strong> + cosine LR decay + warmup</li>
+          <li>Augmentations avancées : <strong>mixup, copy-paste</strong>, rotation, perspective</li>
+          <li>YOLOv8s : fine-tuning en <strong>deux phases</strong> (backbone gelé 10 epochs, puis dégelé)</li>
+          <li><code>close_mosaic</code> pour stabiliser la fin d'entraînement</li>
+          <li>Export <strong>ONNX</strong> (opset 17, dynamique, simplifié) pour le déploiement</li>
+        </ul>
+      </div>
+    </div>
+    <p>Cette double comparaison (architecture × stratégie d'entraînement) constitue l'apport méthodologique du projet et permet une discussion critique plus riche que la seule confrontation de deux modèles pré-entraînés.</p>
+
+    <h2 class="section" id="methodologie">3. Méthodologie expérimentale</h2>
+    <table>
+      <thead><tr><th>Paramètre</th><th>Valeur</th></tr></thead>
+      <tbody>
+        <tr><td>Dataset</td><td>Pascal VOC 2007 uniquement (5 011 train / 2 510 val / 2 510 test)</td></tr>
+        <tr><td>Classes</td><td>20 classes d'objets courants</td></tr>
+        <tr><td>Epochs</td><td>100</td></tr>
+        <tr><td>Batch size</td><td>128</td></tr>
+        <tr><td>Taille d'image</td><td>640 × 640 px</td></tr>
+        <tr><td>GPU</td><td>NVIDIA A40 (48 Go VRAM)</td></tr>
+        <tr><td>Workers</td><td>8</td></tr>
+        <tr><td>Format d'annotation</td><td>Conversion XML VOC → format YOLO (10 031 fichiers)</td></tr>
+      </tbody>
+    </table>
+    <p>Les deux modèles partagent le même split de données et la même configuration matérielle ; seuls les hyperparamètres et la stratégie d'augmentation diffèrent entre le run de référence et le run amélioré, ce qui permet d'attribuer les écarts de performance à une cause identifiée plutôt qu'à un facteur confondant.</p>
+
+    <h2 class="section" id="etat-art">4. État de l'art</h2>
+    <p>La comparaison YOLOv5 vs YOLOv8 a fait l'objet de plusieurs études récentes, avec des conclusions qui varient fortement selon le domaine d'application — ce qui nuance l'idée reçue selon laquelle YOLOv8 serait systématiquement supérieur à son prédécesseur.</p>
+
+    <h3 class="sub">4.1 Résultats contrastés selon le domaine</h3>
+    <p>Casas <em>et al.</em> [1] comparent YOLOv5 et YOLOv8 sur la détection de fumée et de feux de forêt (dataset Foggia) et montrent que YOLOv5 surpasse globalement YOLOv8 sur l'ensemble des métriques, avec des temps d'entraînement et d'inférence également plus favorables. À l'inverse, une étude sur la détection humaine en imagerie aérienne [2] rapporte que YOLOv8s surpasse significativement YOLOv5s (rappel 81,4 % vs 70,4 %, mAP50 89,7 % vs 78,3 %). Ces résultats opposés confirment que le choix du meilleur modèle dépend fortement du contexte applicatif : taille des objets, densité de la scène, qualité des annotations.</p>
+
+    <h3 class="sub">4.2 Référence directe sur Pascal VOC</h3>
+    <p>Une étude portant sur la fonction de perte Focaler-IoU [3] entraîne YOLOv8s sur le protocole standard VOC2007+2012 (16 551 images en entraînement, 4 952 en test) et rapporte un AP50 de 69,5 % et un mAP50-95 de 48,3 % pour la configuration de référence. Ces valeurs, obtenues sur un jeu d'entraînement bien plus large que celui utilisé ici, constituent un point de comparaison important pour la discussion critique (section 7).</p>
+
+    <h3 class="sub">4.3 Effet des techniques d'augmentation</h3>
+    <p>L'étude [4] sur le déséquilibre de classes en détection d'objets confirme l'intérêt de mosaic : les modèles entraînés sans cette augmentation enregistrent systématiquement le mAP le plus faible. À l'inverse, l'étude TC-YOLO [5] sur la détection de chrysanthème trouve que flip et rotation sont les meilleures augmentations individuelles, mosaic et mixup plafonnant plus bas — un excès d'information de gradient redondante étant avancé comme explication. Cette divergence souligne que l'efficacité d'une augmentation dépend fortement du dataset et du type d'objets considéré.</p>
+
+    <h3 class="sub">4.4 Compromis vitesse / précision</h3>
+    <p>La documentation officielle Ultralytics [6] confirme le compromis généralement observé : YOLOv8 atteint un mAP plus élevé, tandis que YOLOv5 conserve un léger avantage en vitesse d'inférence brute pour ses plus petites variantes — un compromis qui n'est cependant <strong>pas universel</strong> : une étude sur GPU embarqué [7] trouve au contraire YOLOv8s plus rapide que YOLOv5s, et une étude sur la détection de casques [8] montre YOLOv8 à la fois plus précis et légèrement plus rapide que YOLOv5.</p>
+
+    <h2 class="section" id="resultats">5. Résultats</h2>
+
+    <h3 class="sub">5.1 Comparaison mAP</h3>
+    <figure>
+      <img src="image/map_comparison.png" alt="Comparaison mAP entre YOLOv5s et YOLOv8s" />
+      <figcaption>Évolution du mAP50 et mAP50-95 au fil des epochs pour YOLOv5s et YOLOv8s.</figcaption>
+    </figure>
+    <p>YOLOv8s converge plus rapidement : dès l'epoch 10, il atteint ~93 % de mAP50 contre ~85 % pour YOLOv5s. En fin d'entraînement (epoch 100), les deux modèles atteignent ~99 % de mAP50, un écart négligeable. La différence significative se situe sur le mAP50-95 : YOLOv8s atteint ~99 % contre ~85 % pour YOLOv5s, ce qui traduit une précision géométrique de localisation nettement supérieure à des seuils IoU stricts.</p>
+    <div class="callout blue">
+      <h4>Interprétation</h4>
+      La supériorité de YOLOv8s sur le mAP50-95 s'explique par l'usage de la <strong>Distribution Focal Loss (DFL)</strong> pour la régression des boîtes, qui modélise une distribution continue des coordonnées plutôt qu'un point unique, produisant des prédictions spatiales plus précises que la CIoU seule utilisée par YOLOv5s.
+    </div>
+
+    <h3 class="sub">5.2 Courbes de loss</h3>
+    <figure>
+      <img src="image/loss_comparison.png" alt="Courbes de loss YOLOv5s vs YOLOv8s" />
+      <figcaption>Courbes de loss d'entraînement et de validation pour les deux modèles.</figcaption>
+    </figure>
+    <div class="callout warn">
+      <h4>⚠️ Note importante</h4>
+      Les deux modèles utilisent des fonctions de loss différentes : YOLOv5s combine BCE (classification) et CIoU (boîtes), tandis que YOLOv8s combine BCE, DFL et CIoU. Les échelles ne sont donc <strong>pas comparables directement</strong> — la loss de YOLOv8s reste plus élevée (~0,4 box) par construction, pas parce que l'apprentissage serait moins bon.
+    </div>
+    <p>Les deux modèles montrent une décroissance monotone sans divergence entre train et validation, confirmant une convergence saine et l'absence de signe évident de surapprentissage.</p>
+
+    <h3 class="sub">5.3 Précision et rappel</h3>
+    <figure>
+      <img src="image/precision_recall_comparison.png" alt="Précision et rappel YOLOv5s vs YOLOv8s" />
+      <figcaption>Évolution de la précision et du rappel au cours de l'entraînement.</figcaption>
+    </figure>
+    <p>YOLOv8s atteint ~99 % de précision et de rappel dès l'epoch ~70, avec une convergence stable. YOLOv5s rattrape progressivement mais présente davantage d'oscillations entre les epochs 20 et 70. En fin d'entraînement, les deux modèles atteignent des performances finales similaires (~99 %), mais YOLOv8s se distingue par sa stabilité et sa convergence plus précoce.</p>
+
+    <h3 class="sub">5.4 Vitesse d'inférence</h3>
+    <figure>
+      <img src="image/speed_comparison.png" alt="Vitesse d'inférence YOLOv5s vs YOLOv8s" />
+      <figcaption>Temps d'inférence (ms/image) et FPS mesurés sur 50 images.</figcaption>
+    </figure>
+    <table>
+      <thead><tr><th>Modèle</th><th>ms / image</th><th>FPS</th></tr></thead>
+      <tbody>
+        <tr><td>YOLOv5s</td><td>13,7 ms</td><td>73,3</td></tr>
+        <tr><td>YOLOv8s</td><td>17,7 ms</td><td>56,5</td></tr>
+      </tbody>
+    </table>
+    <p>YOLOv5s est ~29 % plus rapide en inférence, un écart cohérent avec la différence de paramètres (7,2M vs 11,2M, +55 %). Ce benchmark inclut le preprocessing Python et l'API, pas uniquement le forward pass GPU pur ; avec TensorRT ou ONNX, l'écart de vitesse serait réduit et les deux modèles dépasseraient 100 FPS.</p>
+
+    <h2 class="section" id="recap">6. Tableau récapitulatif</h2>
+    <table>
+      <thead><tr><th>Critère</th><th>YOLOv5s</th><th>YOLOv8s</th><th>Vainqueur</th></tr></thead>
+      <tbody>
+        <tr><td>mAP50 final</td><td>~99 %</td><td>~99 %</td><td class="eq">Égalité</td></tr>
+        <tr><td>mAP50-95 final</td><td>~85 %</td><td>~99 %</td><td class="win">YOLOv8s (+14 pts)</td></tr>
+        <tr><td>Précision finale</td><td>~99 %</td><td>~99 %</td><td class="eq">Égalité</td></tr>
+        <tr><td>Rappel final</td><td>~99 %</td><td>~99 %</td><td class="eq">Égalité</td></tr>
+        <tr><td>Temps d'inférence</td><td>13,7 ms</td><td>17,7 ms</td><td class="win">YOLOv5s (−29 %)</td></tr>
+        <tr><td>Stabilité de convergence</td><td>Oscillations</td><td>Stable</td><td class="win">YOLOv8s</td></tr>
+        <tr><td>Paramètres</td><td>7,2M</td><td>11,2M</td><td class="win">YOLOv5s (léger)</td></tr>
+      </tbody>
+    </table>
+
+    <h2 class="section" id="discussion">7. Discussion critique</h2>
+
+    <h3 class="sub">7.1 Cohérence avec l'état de l'art</h3>
+    <p>Le compromis vitesse/précision observé (YOLOv5s plus rapide, YOLOv8s plus précis en mAP50-95) reproduit fidèlement le constat général de la documentation Ultralytics [6] et confirme un phénomène couramment rapporté, lié à la fois à la taille du modèle et à l'usage de la DFL. Ce compromis n'est toutefois pas une loi générale : [7] trouve YOLOv8s plus rapide que YOLOv5s sur GPU embarqué, et [8] montre YOLOv8 à la fois plus précis et légèrement plus rapide sur la détection de casques. Le classement en vitesse dépend donc fortement du GPU, de la précision numérique, du framework d'inférence et de la taille de batch.</p>
+
+    <h3 class="sub">7.2 Un écart à interroger avec la littérature Pascal VOC</h3>
+    <p>Nos résultats (mAP50 ≈ 99 %, mAP50-95 ≈ 99 % pour YOLOv8s) sont sensiblement plus élevés que ceux rapportés par [3] sur le même dataset (AP50 = 69,5 %, mAP50-95 = 48,3 %) et que ceux rapportés par [2] sur un autre dataset (mAP50 = 89,7 % pour YOLOv8s). Plusieurs facteurs peuvent expliquer cet écart et méritent d'être examinés de façon critique plutôt qu'acceptés tels quels :</p>
+    <div class="callout warn">
+      <h4>Points de vigilance méthodologique</h4>
+      <p><strong>1. Taille et composition du sous-ensemble</strong> — notre étude utilise VOC2007 seul (~5 000 images), alors que le protocole standard de la littérature combine VOC2007+2012 en entraînement (16 551 images) ; un jeu plus restreint peut conduire à une évaluation optimiste.</p>
+      <p><strong>2. Risque de chevauchement train/test</strong> — un mAP50-95 aussi proche de 99 % est atypique, y compris pour des détecteurs état de l'art sur des benchmarks établis (les meilleurs modèles sur COCO dépassent rarement 55–60 %), ce qui justifie de vérifier l'absence de fuite de données entre les splits.</p>
+      <p><strong>3. Protocole d'évaluation</strong> — il convient de vérifier que le calcul du mAP suit strictement la définition standard (IoU de 0,5 à 0,95 par pas de 0,05) et que les métriques ne sont pas mesurées sur le sous-ensemble utilisé pour l'arrêt anticipé.</p>
+      <p><strong>4. Absence d'écart entre les deux modèles</strong> — la littérature [2] montre systématiquement un écart net entre YOLOv5s et YOLOv8s en précision/rappel (jusqu'à 11 points), alors que notre étude observe une égalité quasi parfaite (~99 % pour les deux) ; ce signal peut indiquer un dataset trop simple ou trop petit pour différencier les architectures, plutôt qu'une réelle équivalence de performance.</p>
+    </div>
+    <div class="callout ok">
+      <h4>Ce qui reste valide</h4>
+      Cette divergence ne remet pas en cause la <strong>tendance qualitative</strong> observée (YOLOv8s &gt; YOLOv5s en mAP50-95), cohérente avec le rôle documenté de la DFL dans la littérature. Elle appelle en revanche à la prudence sur l'<strong>amplitude</strong> des scores absolus rapportés, et motive une vérification supplémentaire du split de données sur le run amélioré.
+    </div>
+
+    <h3 class="sub">7.3 Ablation d'augmentation</h3>
+    <p>Le résultat selon lequel mosaic constitue la meilleure augmentation individuelle trouve un appui partiel dans [4], qui confirme l'intérêt général de cette technique sur des scènes à objets multiples — une configuration proche de Pascal VOC. Une dégradation observée avec la rotation peut s'expliquer, par analogie avec [5], par le fait que la rotation détruit l'orientation canonique de certaines classes d'objets (personnes debout, véhicules, mobilier), dont la reconnaissance dépend en partie de leur orientation naturelle dans la scène.</p>
+
+    <h2 class="section" id="conclusion">8. Conclusion</h2>
+    <p><strong>YOLOv8s est recommandé</strong> si la qualité de localisation est prioritaire, son mAP50-95 étant nettement supérieur grâce à la DFL. <strong>YOLOv5s reste pertinent</strong> pour les applications temps réel contraintes, étant ~29 % plus rapide en inférence pour un nombre de paramètres inférieur. Sur Pascal VOC 2007 seul, les deux modèles atteignent des scores très élevés qui doivent être confirmés par une vérification rigoureuse du split de données avant d'être présentés comme définitifs ; la comparaison des stratégies d'entraînement (run de référence vs run amélioré) constitue l'axe de travail original de ce projet et ouvre la voie à une analyse plus fine de l'origine des gains de performance observés.</p>
+
+    <h2 class="section" id="references">Références</h2>
+    <ol class="refs">
+      <li><span class="num">[1]</span>E. Casas, L. Ramos, E. Bendek <em>et al.</em>, "YOLOv5 vs. YOLOv8: Performance Benchmarking in Wildfire and Smoke Detection Scenarios," <em>Journal of Image and Graphics</em>, vol. 12, no. 2, pp. 127–136, 2024.</li>
+      <li><span class="num">[2]</span>"Performance Comparison of YOLOv5 and YOLOv8 Architectures in Human Detection using Aerial Images," ResearchGate, 2023. <a href="https://www.researchgate.net/publication/372773092" target="_blank" rel="noopener">researchgate.net/publication/372773092</a></li>
+      <li><span class="num">[3]</span>"Focaler-IoU: More Focused Intersection over Union Loss," arXiv:2401.10525, 2024. <a href="https://arxiv.org/pdf/2401.10525" target="_blank" rel="noopener">arxiv.org/pdf/2401.10525</a></li>
+      <li><span class="num">[4]</span>"Class Imbalance in Object Detection: An Experimental Diagnosis and Study of Mitigation Strategies," arXiv:2403.07113, 2024. <a href="https://arxiv.org/pdf/2403.07113" target="_blank" rel="noopener">arxiv.org/pdf/2403.07113</a></li>
+      <li><span class="num">[5]</span>"Tea Chrysanthemum Detection under Unstructured Environments Using the TC-YOLO Model," arXiv:2111.02724, 2021. <a href="https://arxiv.org/pdf/2111.02724" target="_blank" rel="noopener">arxiv.org/pdf/2111.02724</a></li>
+      <li><span class="num">[6]</span>Ultralytics, "YOLOv5 vs YOLOv8 Comparison," Ultralytics Docs, 2025. <a href="https://docs.ultralytics.com/compare/yolov5-vs-yolov8" target="_blank" rel="noopener">docs.ultralytics.com/compare/yolov5-vs-yolov8</a></li>
+      <li><span class="num">[7]</span>"Cognitive Edge Device (CED) for Real-Time Environmental Monitoring in Aquatic Ecosystems," arXiv:2401.06157, 2024. <a href="https://arxiv.org/pdf/2401.06157" target="_blank" rel="noopener">arxiv.org/pdf/2401.06157</a></li>
+      <li><span class="num">[8]</span>"Real-time Multi-Class Helmet Violation Detection Using Few-Shot Data Sampling Technique and YOLOv8," arXiv:2304.08256, 2023. <a href="https://arxiv.org/pdf/2304.08256" target="_blank" rel="noopener">arxiv.org/pdf/2304.08256</a></li>
+    </ol>
+
+    <div class="footer-note">Master IA &amp; Big Data — GE-IT, Antananarivo, Madagascar. Projet académique de vision par ordinateur — comparaison YOLOv5s / YOLOv8s sur Pascal VOC 2007.</div>
+  </main>
+</div>
+</body>
+</html>

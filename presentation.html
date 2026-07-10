@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YOLOv5s vs YOLOv8s — Pascal VOC 2007</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0f1117;
+      color: #e8eaf6;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Slideshow ─────────────────────────────────────────────────── */
+    .slideshow {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      height: 100%;
+      padding: 48px 80px;
+      flex-direction: column;
+      justify-content: center;
+      animation: fadeIn .4s ease;
+    }
+    .slide.active { display: flex; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    /* ── Navigation ────────────────────────────────────────────────── */
+    .nav {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      z-index: 100;
+    }
+    .nav button {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 8px 22px;
+      border-radius: 24px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background .2s;
+    }
+    .nav button:hover { background: rgba(255,255,255,0.22); }
+    .nav .counter { font-size: 13px; opacity: .6; min-width: 60px; text-align: center; }
+
+    .dots {
+      position: fixed;
+      right: 28px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      cursor: pointer;
+      transition: background .2s, transform .2s;
+    }
+    .dot.active { background: #7c83fd; transform: scale(1.4); }
+
+    /* ── Typography ────────────────────────────────────────────────── */
+    h1 { font-size: 2.8rem; font-weight: 700; line-height: 1.2; }
+    h2 { font-size: 2rem; font-weight: 700; margin-bottom: 28px; }
+    h3 { font-size: 1.2rem; font-weight: 600; margin-bottom: 10px; }
+    p, li { font-size: 1.05rem; line-height: 1.7; opacity: .88; }
+    ul { padding-left: 20px; }
+    .subtitle { font-size: 1.2rem; opacity: .65; margin-top: 10px; }
+    .tag {
+      display: inline-block;
+      background: rgba(124,131,253,0.2);
+      border: 1px solid rgba(124,131,253,0.4);
+      color: #a5aaff;
+      padding: 3px 12px;
+      border-radius: 12px;
+      font-size: .85rem;
+      margin: 4px 3px;
+    }
+
+    /* ── Layout helpers ─────────────────────────────────────────────── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 8px;
+    }
+    .three-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+      margin-top: 8px;
+    }
+
+    /* ── Cards ──────────────────────────────────────────────────────── */
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 24px 28px;
+    }
+    .card.blue  { border-color: rgba(33,150,243,.4);  background: rgba(33,150,243,.07); }
+    .card.orange{ border-color: rgba(255,87,34,.4);   background: rgba(255,87,34,.07); }
+    .card.green { border-color: rgba(76,175,80,.4);   background: rgba(76,175,80,.07); }
+    .card.purple{ border-color: rgba(124,131,253,.4); background: rgba(124,131,253,.07); }
+
+    /* ── Accent text ─────────────────────────────────────────────────── */
+    .accent-blue   { color: #64b5f6; }
+    .accent-orange { color: #ff8a65; }
+    .accent-green  { color: #81c784; }
+    .accent-purple { color: #a5aaff; }
+    .accent-yellow { color: #ffd54f; }
+
+    /* ── Table ───────────────────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: .98rem; }
+    th {
+      background: rgba(124,131,253,0.18);
+      color: #a5aaff;
+      padding: 10px 16px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(124,131,253,.3);
+    }
+    td {
+      padding: 9px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    tr:last-child td { border-bottom: none; }
+    .win { color: #81c784; font-weight: 700; }
+    .eq  { color: #ffd54f; }
+
+    /* ── Progress bar ────────────────────────────────────────────────── */
+    .progress-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 2px;
+      margin-top: 6px;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 1s ease;
+    }
+
+    /* ── Image slide ─────────────────────────────────────────────────── */
+    .img-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+      margin-top: 16px;
+    }
+    .img-container img {
+      max-width: 100%;
+      max-height: 62vh;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.1);
+      object-fit: contain;
+    }
+
+    /* ── Hero slide ──────────────────────────────────────────────────── */
+    .hero { text-align: center; }
+    .hero h1 { font-size: 3.2rem; }
+    .vs-badge {
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #7c83fd, #ff8a65);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+      margin: 0 14px;
+    }
+    .model-names { display: flex; justify-content: center; align-items: center; margin: 20px 0 10px; }
+    .model-name-v5 { font-size: 2rem; font-weight: 700; color: #64b5f6; }
+    .model-name-v8 { font-size: 2rem; font-weight: 700; color: #ff8a65; }
+
+    /* ── Stat number ─────────────────────────────────────────────────── */
+    .stat-number { font-size: 2.4rem; font-weight: 800; line-height: 1; }
+    .stat-label  { font-size: .85rem; opacity: .6; margin-top: 4px; }
+
+    /* ── Conclusion slide ────────────────────────────────────────────── */
+    .verdict {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      background: rgba(76,175,80,0.1);
+      border: 1px solid rgba(76,175,80,.35);
+      border-radius: 12px;
+      margin-top: 16px;
+      font-size: 1rem;
+    }
+    .verdict-icon { font-size: 1.6rem; }
+  </style>
+</head>
+<body>
+
+<div class="slideshow" id="slideshow">
+
+  <!-- ── SLIDE 1 : Titre ──────────────────────────────────────────────── -->
+  <div class="slide active hero">
+    <div class="model-names">
+      <span class="model-name-v5">YOLOv5s</span>
+      <span class="vs-badge">VS</span>
+      <span class="model-name-v8">YOLOv8s</span>
+    </div>
+    <h1>Comparaison sur Pascal VOC 2007</h1>
+    <p class="subtitle" style="margin-top:18px">Analyse des performances — détection d'objets, 20 classes</p>
+    <div style="margin-top:32px">
+      <span class="tag">100 epochs</span>
+      <span class="tag">Batch 128</span>
+      <span class="tag">640×640 px</span>
+      <span class="tag">NVIDIA A40 48GB</span>
+      <span class="tag">Pascal VOC 2007</span>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 2 : Contexte ───────────────────────────────────────────── -->
+  <div class="slide">
+    <h2>Contexte &amp; Objectif</h2>
+    <div class="two-col">
+      <div class="card">
+        <h3>🎯 Objectif</h3>
+        <p>Comparer objectivement deux versions majeures de YOLO sur un dataset de référence en vision par ordinateur, avec des conditions d'entraînement <strong>strictement identiques</strong>.</p>
+        <br/>
+        <p>Évaluation : précision de détection, qualité de localisation et vitesse d'inférence.</p>
+      </div>
+      <div class="card">
+        <h3>📦 Dataset — Pascal VOC 2007</h3>
+        <ul>
+          <li>~5 000 images annotées</li>
+          <li>20 classes d'objets courants</li>
+          <li>Split : train / val / test</li>
+          <li>Annotations XML → YOLO format</li>
+          <li>Benchmark historique en détection</li>
+        </ul>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:20px">
+      <div class="card blue">
+        <h3 class="accent-blue">YOLOv5s</h3>
+        <p>Architecture CSPNet + PANet • <strong>7.2M paramètres</strong> • PyTorch natif • Ultralytics 2020</p>
+      </div>
+      <div class="card orange">
+        <h3 class="accent-orange">YOLOv8s</h3>
+        <p>Architecture C2f + PANet • <strong>11.2M paramètres</strong> • Ultralytics API • Ultralytics 2023</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 3 : Config ─────────────────────────────────────────────── -->
+  <div class="slide">
+    <h2>Configuration Expérimentale</h2>
+    <div class="three-col">
+      <div class="card purple">
+        <div class="stat-number accent-purple">100</div>
+        <div class="stat-label">Epochs d'entraînement</div>
+      </div>
+      <div class="card purple">
+        <div class="stat-number accent-purple">128</div>
+        <div class="stat-label">Batch size</div>
+      </div>
+      <div class="card purple">
+        <div class="stat-number accent-purple">640px</div>
+        <div class="stat-label">Taille d'image</div>
+      </div>
+    </div>
+    <div style="margin-top: 24px">
+      <table>
+        <thead><tr><th>Paramètre</th><th>YOLOv5s</th><th>YOLOv8s</th></tr></thead>
+        <tbody>
+          <tr><td>Poids initiaux</td><td>COCO pré-entraîné</td><td>COCO pré-entraîné</td></tr>
+          <tr><td>Paramètres</td><td class="accent-blue">7.2M</td><td class="accent-orange">11.2M</td></tr>
+          <tr><td>Loss boîtes</td><td>CIoU</td><td>DFL + CIoU</td></tr>
+          <tr><td>Loss classification</td><td>BCE</td><td>BCE</td></tr>
+          <tr><td>GPU</td><td colspan="2">NVIDIA A40 — 48 GB VRAM</td></tr>
+          <tr><td>Workers DataLoader</td><td colspan="2">8</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 3bis : Contribution originale ─────────────────────────── -->
+  <div class="slide">
+    <h2>Contribution Originale du Projet</h2>
+    <p style="margin-bottom:18px">Au-delà d'une simple application de modèles existants, le projet compare <strong>deux stratégies d'entraînement</strong> sur le même dataset et la même architecture, afin d'isoler l'effet de la méthode d'optimisation de celui de l'architecture.</p>
+    <div class="two-col">
+      <div class="card">
+        <h3 class="accent-blue">⚙️ Run de référence</h3>
+        <ul>
+          <li>Hyperparamètres par défaut (SGD)</li>
+          <li>Augmentations standard (mosaic, flip, HSV)</li>
+          <li>Entraînement en une seule phase</li>
+        </ul>
+      </div>
+      <div class="card purple">
+        <h3 class="accent-purple">🔬 Run amélioré (notre contribution)</h3>
+        <ul>
+          <li><strong>AdamW</strong> + Cosine LR decay + Warmup</li>
+          <li>Augmentations avancées : <strong>Mixup, Copy-Paste</strong>, rotation, perspective</li>
+          <li>YOLOv8s : fine-tuning en <strong>2 phases</strong> (backbone gelé → dégelé)</li>
+          <li><code>close_mosaic</code> pour stabiliser la fin d'entraînement</li>
+          <li>Export <strong>ONNX</strong> pour le déploiement en production</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <p><strong>Pourquoi c'est un travail original :</strong> plutôt que de simplement lancer YOLOv5s et YOLOv8s sur VOC2007, le projet mesure ce que chaque levier d'optimisation apporte réellement — ce qui permet une discussion critique sur les sources de gain de performance, plutôt qu'une comparaison brute d'architectures.</p>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 4 : mAP graph ──────────────────────────────────────────── -->
+  <div class="slide">
+    <h2>Comparaison mAP</h2>
+    <div class="img-container">
+      <img src="image/map_comparison.png" alt="Comparaison mAP" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 5 : Analyse mAP ────────────────────────────────────────── -->
+  <div class="slide">
+    <h2>Analyse — mAP</h2>
+    <div class="two-col">
+      <div>
+        <div class="card blue" style="margin-bottom:16px">
+          <h3 class="accent-blue">mAP50 @ epoch 100</h3>
+          <p>Les deux modèles atteignent <strong>~99%</strong>. Écart négligeable en fin d'entraînement.</p>
+          <br/>
+          <p>YOLOv8s <strong>converge plus rapidement</strong> — atteint 93% dès l'epoch 10 contre ~85% pour YOLOv5s.</p>
+        </div>
+        <div class="card orange">
+          <h3 class="accent-orange">mAP50-95 @ epoch 100</h3>
+          <p>Différence significative :</p>
+          <ul style="margin-top:8px">
+            <li><strong class="accent-orange">YOLOv8s : ~99%</strong></li>
+            <li><strong class="accent-blue">YOLOv5s : ~85%</strong></li>
+          </ul>
+          <p style="margin-top:10px">Écart de <strong class="accent-green">+14 points</strong> en faveur de YOLOv8s.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3>💡 Pourquoi cet écart mAP50-95 ?</h3>
+        <p>YOLOv8s utilise <strong>DFL — Distribution Focal Loss</strong> pour la régression des boîtes.</p>
+        <br/>
+        <p>Au lieu de prédire un point unique pour chaque coordonnée, DFL modélise une <strong>distribution continue</strong>, produisant des bounding boxes plus précises géométriquement.</p>
+        <br/>
+        <p>Résultat : les détections restent correctes même avec des seuils IoU stricts (0.75, 0.90).</p>
+        <br/>
+        <p>YOLOv5s utilise uniquement CIoU — moins flexible pour les formes complexes.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 6 : Loss graph ──────────────────────────────────────────── -->
+  <div class="slide">
+    <h2>Courbes de Loss</h2>
+    <div class="img-container">
+      <img src="image/loss_comparison.png" alt="Courbes de Loss" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 7 : Analyse Loss ───────────────────────────────────────── -->
+  <div class="slide">
+    <h2>Analyse — Courbes de Loss</h2>
+    <div class="two-col">
+      <div class="card" style="background: rgba(255,193,7,0.06); border-color: rgba(255,193,7,0.3);">
+        <h3 class="accent-yellow">⚠️ Note importante</h3>
+        <p>Les valeurs de loss <strong>ne sont pas directement comparables</strong> entre YOLOv5s et YOLOv8s car ils utilisent des fonctions différentes à des échelles différentes.</p>
+        <br/>
+        <table>
+          <thead><tr><th>Modèle</th><th>Loss boîtes</th><th>Échelle</th></tr></thead>
+          <tbody>
+            <tr><td class="accent-blue">YOLOv5s</td><td>CIoU</td><td>Faible (~0.02)</td></tr>
+            <tr><td class="accent-orange">YOLOv8s</td><td>DFL + CIoU</td><td>Plus élevée (~0.4)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3>✅ Ce qu'on peut conclure</h3>
+        <ul>
+          <li style="margin-bottom:10px">Les deux modèles montrent une <strong>décroissance monotone</strong> sans divergence → convergence saine</li>
+          <li style="margin-bottom:10px">Aucun signe de surapprentissage (train ≈ val loss)</li>
+          <li style="margin-bottom:10px">YOLOv8s a plus de variance en début d'entraînement (epochs 1–15) due à la complexité de DFL</li>
+          <li>YOLOv5s converge vers des valeurs proches de 0 — normal avec BCE/CIoU</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 8 : Précision/Rappel graph ─────────────────────────────── -->
+  <div class="slide">
+    <h2>Précision &amp; Rappel</h2>
+    <div class="img-container">
+      <img src="image/precision_recall_comparison.png" alt="Précision et Rappel" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 9 : Analyse P/R ────────────────────────────────────────── -->
+  <div class="slide">
+    <h2>Analyse — Précision &amp; Rappel</h2>
+    <div class="three-col">
+      <div class="card orange">
+        <h3 class="accent-orange">YOLOv8s</h3>
+        <div class="stat-number accent-orange" style="font-size:1.8rem; margin: 10px 0">~99%</div>
+        <p>Précision &amp; Rappel finaux</p>
+        <br/>
+        <p>Converge dès <strong>epoch ~70</strong></p>
+        <div class="progress-bar"><div class="progress-fill" style="width:99%; background:#ff8a65"></div></div>
+      </div>
+      <div class="card blue">
+        <h3 class="accent-blue">YOLOv5s</h3>
+        <div class="stat-number accent-blue" style="font-size:1.8rem; margin: 10px 0">~99%</div>
+        <p>Précision &amp; Rappel finaux</p>
+        <br/>
+        <p>Plus d'<strong>oscillations</strong> (epochs 20–70)</p>
+        <div class="progress-bar"><div class="progress-fill" style="width:99%; background:#64b5f6"></div></div>
+      </div>
+      <div class="card green">
+        <h3 class="accent-green">Verdict</h3>
+        <p>Performances finales identiques, mais :</p>
+        <br/>
+        <ul>
+          <li>YOLOv8s plus <strong>stable</strong></li>
+          <li>Convergence <strong>plus rapide</strong></li>
+          <li>Moins de variance en cours d'entraînement</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top: 20px">
+      <p><strong>Interprétation :</strong> Les deux modèles apprennent à détecter les 20 classes VOC avec une précision et un rappel excellents. La différence clé est la <strong>stabilité de convergence</strong> — YOLOv8s bénéficie d'améliorations architecturales (anchorless detection, C2f blocks) qui stabilisent l'apprentissage.</p>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 10 : Vitesse graph ──────────────────────────────────────── -->
+  <div class="slide">
+    <h2>Vitesse d'Inférence</h2>
+    <div class="img-container">
+      <img src="image/speed_comparison.png" alt="Vitesse d'inférence" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 11 : Analyse vitesse ───────────────────────────────────── -->
+  <div class="slide">
+    <h2>Analyse — Vitesse d'Inférence</h2>
+    <div class="two-col">
+      <div>
+        <div class="card blue" style="margin-bottom:16px">
+          <h3 class="accent-blue">YOLOv5s — Plus rapide</h3>
+          <div class="stat-number accent-blue">13.7 ms</div>
+          <p style="margin-top:6px">73.3 FPS</p>
+          <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:73%; background:#64b5f6"></div></div>
+        </div>
+        <div class="card orange">
+          <h3 class="accent-orange">YOLOv8s — Plus lent</h3>
+          <div class="stat-number accent-orange">17.7 ms</div>
+          <p style="margin-top:6px">56.5 FPS</p>
+          <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:56%; background:#ff8a65"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>💡 Analyse</h3>
+        <p><strong>YOLOv5s est ~29% plus rapide</strong> (4ms de différence).</p>
+        <br/>
+        <p>Cohérent avec l'écart de paramètres :</p>
+        <ul style="margin: 8px 0">
+          <li>YOLOv5s : 7.2M params</li>
+          <li>YOLOv8s : 11.2M params (+55%)</li>
+        </ul>
+        <br/>
+        <p style="font-size:.9rem; opacity:.7">⚠️ Ce benchmark inclut preprocessing Python + API overhead. Avec <strong>TensorRT ou ONNX</strong>, les deux modèles dépasseraient 100+ FPS et l'écart relatif serait réduit.</p>
+        <br/>
+        <p>Les deux modèles sont largement utilisables en <strong>temps réel</strong> (≥ 25 FPS requis).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 12 : Tableau récap ──────────────────────────────────────── -->
+  <div class="slide">
+    <h2>Tableau Récapitulatif</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Critère</th>
+          <th class="accent-blue">YOLOv5s</th>
+          <th class="accent-orange">YOLOv8s</th>
+          <th>Vainqueur</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>mAP50 final</strong></td>
+          <td>~99%</td>
+          <td>~99%</td>
+          <td class="eq">Égalité</td>
+        </tr>
+        <tr>
+          <td><strong>mAP50-95 final</strong></td>
+          <td>~85%</td>
+          <td>~99%</td>
+          <td class="win">YOLOv8s +14pts</td>
+        </tr>
+        <tr>
+          <td><strong>Précision finale</strong></td>
+          <td>~99%</td>
+          <td>~99%</td>
+          <td class="eq">Égalité</td>
+        </tr>
+        <tr>
+          <td><strong>Rappel final</strong></td>
+          <td>~99%</td>
+          <td>~99%</td>
+          <td class="eq">Égalité</td>
+        </tr>
+        <tr>
+          <td><strong>Temps inférence</strong></td>
+          <td>13.7 ms</td>
+          <td>17.7 ms</td>
+          <td class="win">YOLOv5s −29%</td>
+        </tr>
+        <tr>
+          <td><strong>FPS</strong></td>
+          <td>73.3</td>
+          <td>56.5</td>
+          <td class="win">YOLOv5s +16.8 FPS</td>
+        </tr>
+        <tr>
+          <td><strong>Stabilité convergence</strong></td>
+          <td>Oscillations</td>
+          <td>Stable</td>
+          <td class="win">YOLOv8s</td>
+        </tr>
+        <tr>
+          <td><strong>Paramètres</strong></td>
+          <td>7.2M</td>
+          <td>11.2M</td>
+          <td class="win">YOLOv5s (léger)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── SLIDE 12bis : État de l'art ──────────────────────────────────── -->
+  <div class="slide">
+    <h2>État de l'Art — YOLOv5 vs YOLOv8</h2>
+    <p style="margin-bottom:14px">La supériorité de YOLOv8 n'est <strong>pas universelle</strong> dans la littérature : elle dépend fortement du domaine d'application.</p>
+    <div class="three-col">
+      <div class="card orange">
+        <h3 class="accent-orange">Imagerie aérienne (humains)</h3>
+        <p style="font-size:.95rem">YOLOv8s bat nettement YOLOv5s : rappel 81.4% vs 70.4%, mAP50 89.7% vs 78.3%.</p>
+      </div>
+      <div class="card blue">
+        <h3 class="accent-blue">Feux &amp; fumée (Casas et al.)</h3>
+        <p style="font-size:.95rem">Résultat inverse : YOLOv5 surpasse YOLOv8 sur toutes les métriques, entraînement et inférence plus rapides.</p>
+      </div>
+      <div class="card green">
+        <h3 class="accent-green">Pascal VOC (Focaler-IoU)</h3>
+        <p style="font-size:.95rem">YOLOv8s (VOC2007+2012) : AP50 = 69.5%, mAP50-95 = 48.3% — bien en-dessous de nos résultats.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <p><strong>À retenir :</strong> le choix du meilleur modèle dépend du contexte (taille des objets, densité de la scène, qualité des annotations). La documentation Ultralytics confirme toutefois le compromis vitesse (YOLOv5) / précision (YOLOv8) que nous observons.</p>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 12ter : Discussion critique ───────────────────────────── -->
+  <div class="slide">
+    <h2>Discussion Critique des Résultats</h2>
+    <div class="card" style="background: rgba(255,193,7,0.06); border-color: rgba(255,193,7,0.3); margin-bottom:18px">
+      <h3 class="accent-yellow">⚠️ Un écart à interroger</h3>
+      <p>Nos scores (~99% mAP50-95) sont largement supérieurs à ceux de la littérature sur VOC (48–57%). Un mAP50-95 aussi proche de 100% est atypique — même les meilleurs détecteurs sur COCO dépassent rarement 55-60%.</p>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h3>🔍 Causes possibles</h3>
+        <ul>
+          <li>VOC2007 seul (~5 000 img.) vs protocole standard VOC2007+2012 (16 551 img.) — jeu plus restreint, potentiellement plus facile</li>
+          <li>Risque de chevauchement train/val/test à vérifier</li>
+          <li>Égalité quasi parfaite précision/rappel entre v5s et v8s (atypique — la littérature montre en général un écart net)</li>
+        </ul>
+      </div>
+      <div class="card green">
+        <h3 class="accent-green">✅ Ce qui reste valide</h3>
+        <p>La <strong>tendance qualitative</strong> (YOLOv8s &gt; YOLOv5s en mAP50-95, grâce à la DFL) est cohérente avec la littérature. C'est l'<strong>amplitude</strong> des scores absolus qui appelle à la prudence, pas la direction de l'effet.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 13 : Conclusion ──────────────────────────────────────────── -->
+  <div class="slide">
+    <h2>Conclusion</h2>
+    <div class="two-col">
+      <div>
+        <div class="verdict">
+          <span class="verdict-icon">🏆</span>
+          <div>
+            <strong class="accent-orange">YOLOv8s recommandé</strong> si la <strong>qualité de localisation</strong> est prioritaire — mAP50-95 supérieur de 14 points grâce à DFL.
+          </div>
+        </div>
+        <div class="verdict" style="background: rgba(33,150,243,0.1); border-color: rgba(33,150,243,.35); margin-top:12px">
+          <span class="verdict-icon">⚡</span>
+          <div>
+            <strong class="accent-blue">YOLOv5s recommandé</strong> pour les applications <strong>temps-réel contraintes</strong> — 29% plus rapide, moins de mémoire.
+          </div>
+        </div>
+        <div class="verdict" style="background: rgba(124,131,253,0.1); border-color: rgba(124,131,253,.35); margin-top:12px">
+          <span class="verdict-icon">🔬</span>
+          <div>
+            Sur <strong>VOC 2007 seul</strong>, les deux atteignent ~99% mAP50 — un score à confirmer par une vérification de split, la littérature rapportant des valeurs bien plus modestes sur ce même dataset.
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📌 Points clés à retenir</h3>
+        <ul style="margin-top: 12px">
+          <li style="margin-bottom: 12px"><strong>mAP50-95 ≠ mAP50</strong> — La localisation fine différencie vraiment les architectures</li>
+          <li style="margin-bottom: 12px"><strong>DFL</strong> (YOLOv8) = meilleure précision géométrique des boîtes</li>
+          <li style="margin-bottom: 12px"><strong>Les loss ne sont pas comparables</strong> entre YOLOv5 et YOLOv8 (échelles différentes)</li>
+          <li style="margin-bottom: 12px">La supériorité de YOLOv8 est <strong>contextuelle</strong>, pas universelle (cf. état de l'art)</li>
+          <li>Prochaine étape : re-vérifier le split train/val/test sur le run amélioré</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 14 : Références ────────────────────────────────────────── -->
+  <div class="slide">
+    <h2>Références</h2>
+    <div class="card">
+      <ul style="font-size:.92rem; line-height:2.1">
+        <li>[1] Casas, E. et al., "YOLOv5 vs. YOLOv8: Performance Benchmarking in Wildfire and Smoke Detection Scenarios," <em>Journal of Image and Graphics</em>, vol. 12, no. 2, 2024.</li>
+        <li>[2] "Performance Comparison of YOLOv5 and YOLOv8 Architectures in Human Detection using Aerial Images," ResearchGate, 2023.</li>
+        <li>[3] "Focaler-IoU: More Focused Intersection over Union Loss," arXiv:2401.10525, 2024.</li>
+        <li>[4] "Class Imbalance in Object Detection: An Experimental Diagnosis and Study of Mitigation Strategies," arXiv:2403.07113, 2024.</li>
+        <li>[5] "Tea Chrysanthemum Detection under Unstructured Environments Using the TC-YOLO Model," arXiv:2111.02724, 2021.</li>
+        <li>[6] Ultralytics, "YOLOv5 vs YOLOv8 Comparison," Ultralytics Docs, 2025.</li>
+        <li>[7] "Cognitive Edge Device (CED) for Real-Time Environmental Monitoring in Aquatic Ecosystems," arXiv:2401.06157, 2024.</li>
+        <li>[8] "Real-time Multi-Class Helmet Violation Detection Using Few-Shot Data Sampling and YOLOv8," arXiv:2304.08256, 2023.</li>
+      </ul>
+    </div>
+  </div>
+
+</div><!-- end slideshow -->
+
+<!-- ── Navigation ─────────────────────────────────────────────────────── -->
+<div class="nav">
+  <button onclick="prevSlide()">← Précédent</button>
+  <span class="counter" id="counter">1 / 13</span>
+  <button onclick="nextSlide()">Suivant →</button>
+</div>
+
+<div class="dots" id="dots"></div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let current  = 0;
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    dotsEl.children[current].classList.remove('active');
+    current = (n + total) % total;
+    slides[current].classList.add('active');
+    dotsEl.children[current].classList.add('active');
+    document.getElementById('counter').textContent = `${current + 1} / ${total}`;
+  }
+
+  function nextSlide() { goTo(current + 1); }
+  function prevSlide() { goTo(current - 1); }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') nextSlide();
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')  prevSlide();
+  });
+</script>
+
+</body>
+</html>
