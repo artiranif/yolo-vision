@@ -1,0 +1,9 @@
+{
+  "timestamp": "20260710_135430",
+  "epochs": 100,
+  "batch": 128,
+  "img_sz": 640,
+  "device": "0",
+  "save_period": 2,
+  "gpu": "NVIDIA A40"
+}

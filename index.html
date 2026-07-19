@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YOLOv5s vs YOLOv8s — Pascal VOC 2007</title>
+  <title>YOLOv5s vs YOLOv8s — Pascal VOC 2007 (2 expériences)</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -221,7 +221,7 @@
       <span class="model-name-v8">YOLOv8s</span>
     </div>
     <h1>Comparaison sur Pascal VOC 2007</h1>
-    <p class="subtitle" style="margin-top:18px">Analyse des performances — détection d'objets, 20 classes</p>
+    <p class="subtitle" style="margin-top:18px">Deux expériences — entraînement de référence &amp; version améliorée</p>
     <div style="margin-top:32px">
       <span class="tag">100 epochs</span>
       <span class="tag">Batch 128</span>
@@ -229,241 +229,312 @@
       <span class="tag">NVIDIA A40 48GB</span>
       <span class="tag">Pascal VOC 2007</span>
     </div>
+    <p class="subtitle" style="margin-top:26px; font-size:1rem">Architectures → Expérience 1 → Améliorations → Expérience 2 → Conclusion</p>
   </div>
 
-  <!-- ── SLIDE 2 : Contexte ───────────────────────────────────────────── -->
+  <!-- ── SLIDE 2 : Présentation YOLO ──────────────────────────────────── -->
   <div class="slide">
-    <h2>Contexte &amp; Objectif</h2>
+    <h2>YOLOv5 &amp; YOLOv8 — Présentation</h2>
     <div class="two-col">
-      <div class="card">
-        <h3>🎯 Objectif</h3>
-        <p>Comparer objectivement deux versions majeures de YOLO sur un dataset de référence en vision par ordinateur, avec des conditions d'entraînement <strong>strictement identiques</strong>.</p>
-        <br/>
-        <p>Évaluation : précision de détection, qualité de localisation et vitesse d'inférence.</p>
+      <div class="card blue">
+        <h3 class="accent-blue">YOLOv5s <span style="opacity:.6; font-size:.9rem">(2020)</span></h3>
+        <p>Détecteur mono-étage (<em>single-stage</em>) publié par Ultralytics, écrit en PyTorch natif.</p>
+        <ul style="margin-top:10px">
+          <li><strong>Anchor-based</strong> — 3 anchors prédéfinis par échelle</li>
+          <li>Backbone <strong>CSPDarknet</strong> + neck <strong>PANet</strong></li>
+          <li>~7.2M paramètres — modèle léger et rapide</li>
+          <li>Loss : CIoU (boîtes) + BCE (objet/classe)</li>
+        </ul>
       </div>
-      <div class="card">
-        <h3>📦 Dataset — Pascal VOC 2007</h3>
-        <ul>
-          <li>~5 000 images annotées</li>
-          <li>20 classes d'objets courants</li>
-          <li>Split : train / val / test</li>
-          <li>Annotations XML → YOLO format</li>
-          <li>Benchmark historique en détection</li>
+      <div class="card orange">
+        <h3 class="accent-orange">YOLOv8s <span style="opacity:.6; font-size:.9rem">(2023)</span></h3>
+        <p>Nouvelle génération Ultralytics, API unifiée et pipeline d'entraînement modernisé.</p>
+        <ul style="margin-top:10px">
+          <li><strong>Anchor-free</strong> — prédiction directe des centres</li>
+          <li>Backbone <strong>C2f</strong> + neck <strong>PANet</strong></li>
+          <li>~11.2M paramètres — plus profond</li>
+          <li>Loss : <strong>DFL</strong> + CIoU (boîtes) + BCE (classe)</li>
         </ul>
       </div>
     </div>
-    <div class="two-col" style="margin-top:20px">
-      <div class="card blue">
-        <h3 class="accent-blue">YOLOv5s</h3>
-        <p>Architecture CSPNet + PANet • <strong>7.2M paramètres</strong> • PyTorch natif • Ultralytics 2020</p>
-      </div>
-      <div class="card orange">
-        <h3 class="accent-orange">YOLOv8s</h3>
-        <p>Architecture C2f + PANet • <strong>11.2M paramètres</strong> • Ultralytics API • Ultralytics 2023</p>
-      </div>
+    <div class="card" style="margin-top:20px">
+      <p><strong>Point commun :</strong> les deux sont des détecteurs temps-réel mono-étage entraînés ici dans des conditions <strong>strictement identiques</strong> (mêmes epochs, batch, images, GPU) pour une comparaison équitable.</p>
     </div>
   </div>
 
-  <!-- ── SLIDE 3 : Config ─────────────────────────────────────────────── -->
+  <!-- ── SLIDE 3 : Architecture comparée ──────────────────────────────── -->
   <div class="slide">
-    <h2>Configuration Expérimentale</h2>
+    <h2>Architecture Comparée</h2>
     <div class="three-col">
-      <div class="card purple">
-        <div class="stat-number accent-purple">100</div>
-        <div class="stat-label">Epochs d'entraînement</div>
+      <div class="card blue">
+        <h3 class="accent-blue">Backbone</h3>
+        <p><strong>v5 :</strong> CSPDarknet — blocs C3 (CSP)</p>
+        <br/>
+        <p><strong>v8 :</strong> C2f — plus de connexions résiduelles, meilleur flux de gradient</p>
       </div>
-      <div class="card purple">
-        <div class="stat-number accent-purple">128</div>
-        <div class="stat-label">Batch size</div>
+      <div class="card orange">
+        <h3 class="accent-orange">Tête de détection</h3>
+        <p><strong>v5 :</strong> couplée + anchors prédéfinis</p>
+        <br/>
+        <p><strong>v8 :</strong> <strong>découplée</strong> (cls / box séparés) + anchor-free</p>
       </div>
-      <div class="card purple">
-        <div class="stat-number accent-purple">640px</div>
-        <div class="stat-label">Taille d'image</div>
+      <div class="card green">
+        <h3 class="accent-green">Régression des boîtes</h3>
+        <p><strong>v5 :</strong> CIoU — point unique par coordonnée</p>
+        <br/>
+        <p><strong>v8 :</strong> <strong>DFL</strong> — distribution continue, localisation plus fine</p>
       </div>
     </div>
-    <div style="margin-top: 24px">
+    <div style="margin-top:22px">
       <table>
-        <thead><tr><th>Paramètre</th><th>YOLOv5s</th><th>YOLOv8s</th></tr></thead>
+        <thead><tr><th>Caractéristique</th><th class="accent-blue">YOLOv5s</th><th class="accent-orange">YOLOv8s</th></tr></thead>
         <tbody>
-          <tr><td>Poids initiaux</td><td>COCO pré-entraîné</td><td>COCO pré-entraîné</td></tr>
+          <tr><td>Année</td><td>2020</td><td>2023</td></tr>
           <tr><td>Paramètres</td><td class="accent-blue">7.2M</td><td class="accent-orange">11.2M</td></tr>
+          <tr><td>Approche anchors</td><td>Anchor-based</td><td>Anchor-free</td></tr>
+          <tr><td>Backbone</td><td>CSPDarknet (C3)</td><td>C2f</td></tr>
+          <tr><td>Tête</td><td>Couplée</td><td>Découplée</td></tr>
           <tr><td>Loss boîtes</td><td>CIoU</td><td>DFL + CIoU</td></tr>
-          <tr><td>Loss classification</td><td>BCE</td><td>BCE</td></tr>
-          <tr><td>GPU</td><td colspan="2">NVIDIA A40 — 48 GB VRAM</td></tr>
-          <tr><td>Workers DataLoader</td><td colspan="2">8</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- ── SLIDE 4 : mAP graph ──────────────────────────────────────────── -->
-  <div class="slide">
-    <h2>Comparaison mAP</h2>
-    <div class="img-container">
-      <img src="image/map_comparison.png" alt="Comparaison mAP" />
-    </div>
-  </div>
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!--  PARTIE 1 — PREMIÈRE EXPÉRIENCE (entraînement de référence)          -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
 
-  <!-- ── SLIDE 5 : Analyse mAP ────────────────────────────────────────── -->
+  <!-- ── SLIDE 4 : Intro Expérience 1 ─────────────────────────────────── -->
   <div class="slide">
-    <h2>Analyse — mAP</h2>
+    <h2><span class="accent-purple">Expérience 1</span> — Entraînement de Référence</h2>
     <div class="two-col">
-      <div>
-        <div class="card blue" style="margin-bottom:16px">
-          <h3 class="accent-blue">mAP50 @ epoch 100</h3>
-          <p>Les deux modèles atteignent <strong>~99%</strong>. Écart négligeable en fin d'entraînement.</p>
-          <br/>
-          <p>YOLOv8s <strong>converge plus rapidement</strong> — atteint 93% dès l'epoch 10 contre ~85% pour YOLOv5s.</p>
-        </div>
-        <div class="card orange">
-          <h3 class="accent-orange">mAP50-95 @ epoch 100</h3>
-          <p>Différence significative :</p>
-          <ul style="margin-top:8px">
-            <li><strong class="accent-orange">YOLOv8s : ~99%</strong></li>
-            <li><strong class="accent-blue">YOLOv5s : ~85%</strong></li>
-          </ul>
-          <p style="margin-top:10px">Écart de <strong class="accent-green">+14 points</strong> en faveur de YOLOv8s.</p>
-        </div>
+      <div class="card">
+        <h3>🎯 Objectif</h3>
+        <p>Premier entraînement « baseline » : YOLOv5s et YOLOv8s avec les <strong>hyperparamètres par défaut</strong>, sans optimisation particulière.</p>
+        <br/>
+        <p>But : établir un point de référence pour mesurer l'impact des améliorations à venir.</p>
       </div>
       <div class="card">
-        <h3>💡 Pourquoi cet écart mAP50-95 ?</h3>
-        <p>YOLOv8s utilise <strong>DFL — Distribution Focal Loss</strong> pour la régression des boîtes.</p>
-        <br/>
-        <p>Au lieu de prédire un point unique pour chaque coordonnée, DFL modélise une <strong>distribution continue</strong>, produisant des bounding boxes plus précises géométriquement.</p>
-        <br/>
-        <p>Résultat : les détections restent correctes même avec des seuils IoU stricts (0.75, 0.90).</p>
-        <br/>
-        <p>YOLOv5s utilise uniquement CIoU — moins flexible pour les formes complexes.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── SLIDE 6 : Loss graph ──────────────────────────────────────────── -->
-  <div class="slide">
-    <h2>Courbes de Loss</h2>
-    <div class="img-container">
-      <img src="image/loss_comparison.png" alt="Courbes de Loss" />
-    </div>
-  </div>
-
-  <!-- ── SLIDE 7 : Analyse Loss ───────────────────────────────────────── -->
-  <div class="slide">
-    <h2>Analyse — Courbes de Loss</h2>
-    <div class="two-col">
-      <div class="card" style="background: rgba(255,193,7,0.06); border-color: rgba(255,193,7,0.3);">
-        <h3 class="accent-yellow">⚠️ Note importante</h3>
-        <p>Les valeurs de loss <strong>ne sont pas directement comparables</strong> entre YOLOv5s et YOLOv8s car ils utilisent des fonctions différentes à des échelles différentes.</p>
-        <br/>
-        <table>
-          <thead><tr><th>Modèle</th><th>Loss boîtes</th><th>Échelle</th></tr></thead>
-          <tbody>
-            <tr><td class="accent-blue">YOLOv5s</td><td>CIoU</td><td>Faible (~0.02)</td></tr>
-            <tr><td class="accent-orange">YOLOv8s</td><td>DFL + CIoU</td><td>Plus élevée (~0.4)</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="card">
-        <h3>✅ Ce qu'on peut conclure</h3>
+        <h3>⚙️ Configuration</h3>
         <ul>
-          <li style="margin-bottom:10px">Les deux modèles montrent une <strong>décroissance monotone</strong> sans divergence → convergence saine</li>
-          <li style="margin-bottom:10px">Aucun signe de surapprentissage (train ≈ val loss)</li>
-          <li style="margin-bottom:10px">YOLOv8s a plus de variance en début d'entraînement (epochs 1–15) due à la complexité de DFL</li>
-          <li>YOLOv5s converge vers des valeurs proches de 0 — normal avec BCE/CIoU</li>
+          <li>100 epochs — batch 128 — 640×640 px</li>
+          <li>Poids initiaux COCO pré-entraînés</li>
+          <li>Augmentations standard (mosaic, HSV, flip)</li>
+          <li>Optimiseur par défaut (SGD)</li>
+          <li>GPU NVIDIA A40 — 48 GB VRAM</li>
         </ul>
       </div>
     </div>
-  </div>
-
-  <!-- ── SLIDE 8 : Précision/Rappel graph ─────────────────────────────── -->
-  <div class="slide">
-    <h2>Précision &amp; Rappel</h2>
-    <div class="img-container">
-      <img src="image/precision_recall_comparison.png" alt="Précision et Rappel" />
+    <div class="three-col" style="margin-top:20px">
+      <div class="card purple"><div class="stat-number accent-purple">100</div><div class="stat-label">Epochs</div></div>
+      <div class="card purple"><div class="stat-number accent-purple">128</div><div class="stat-label">Batch size</div></div>
+      <div class="card purple"><div class="stat-number accent-purple">640px</div><div class="stat-label">Image</div></div>
     </div>
   </div>
 
-  <!-- ── SLIDE 9 : Analyse P/R ────────────────────────────────────────── -->
+  <!-- ── SLIDE 5 : Exp1 mAP graph ─────────────────────────────────────── -->
   <div class="slide">
-    <h2>Analyse — Précision &amp; Rappel</h2>
-    <div class="three-col">
-      <div class="card orange">
-        <h3 class="accent-orange">YOLOv8s</h3>
-        <div class="stat-number accent-orange" style="font-size:1.8rem; margin: 10px 0">~99%</div>
-        <p>Précision &amp; Rappel finaux</p>
-        <br/>
-        <p>Converge dès <strong>epoch ~70</strong></p>
-        <div class="progress-bar"><div class="progress-fill" style="width:99%; background:#ff8a65"></div></div>
-      </div>
+    <h2><span class="accent-purple">Exp 1</span> — Comparaison mAP</h2>
+    <div class="img-container">
+      <img src="image/map_comparison.png" alt="Exp1 — Comparaison mAP" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 6 : Exp1 Loss graph ────────────────────────────────────── -->
+  <div class="slide">
+    <h2><span class="accent-purple">Exp 1</span> — Courbes de Loss</h2>
+    <div class="img-container">
+      <img src="image/loss_comparison.png" alt="Exp1 — Courbes de Loss" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 7 : Exp1 Précision/Rappel graph ────────────────────────── -->
+  <div class="slide">
+    <h2><span class="accent-purple">Exp 1</span> — Précision &amp; Rappel</h2>
+    <div class="img-container">
+      <img src="image/precision_recall_comparison.png" alt="Exp1 — Précision et Rappel" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 8 : Exp1 Vitesse graph ─────────────────────────────────── -->
+  <div class="slide">
+    <h2><span class="accent-purple">Exp 1</span> — Vitesse d'Inférence</h2>
+    <div class="img-container">
+      <img src="image/speed_comparison.png" alt="Exp1 — Vitesse d'inférence" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 9 : Exp1 Bilan ─────────────────────────────────────────── -->
+  <div class="slide">
+    <h2><span class="accent-purple">Exp 1</span> — Bilan de la Première Expérience</h2>
+    <div class="two-col">
       <div class="card blue">
-        <h3 class="accent-blue">YOLOv5s</h3>
-        <div class="stat-number accent-blue" style="font-size:1.8rem; margin: 10px 0">~99%</div>
-        <p>Précision &amp; Rappel finaux</p>
-        <br/>
-        <p>Plus d'<strong>oscillations</strong> (epochs 20–70)</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:99%; background:#64b5f6"></div></div>
+        <h3 class="accent-blue">Ce qu'on observe</h3>
+        <ul>
+          <li style="margin-bottom:8px"><strong>mAP50</strong> : les deux atteignent ~99% en fin d'entraînement</li>
+          <li style="margin-bottom:8px"><strong>mAP50-95</strong> : YOLOv8s nettement supérieur grâce à DFL</li>
+          <li style="margin-bottom:8px"><strong>Vitesse</strong> : YOLOv5s ~13.7 ms (73 FPS) vs YOLOv8s ~17.7 ms (56 FPS)</li>
+          <li>YOLOv8s converge plus vite mais reste plus lourd</li>
+        </ul>
+      </div>
+      <div class="card" style="background: rgba(255,193,7,0.06); border-color: rgba(255,193,7,0.3);">
+        <h3 class="accent-yellow">⚠️ Limites détectées</h3>
+        <ul>
+          <li style="margin-bottom:8px">Convergence <strong>instable</strong> (oscillations de précision/rappel)</li>
+          <li style="margin-bottom:8px">Pas d'analyse fine : distribution des classes, F1, mAP par classe</li>
+          <li style="margin-bottom:8px">Augmentations basiques → risque sur les classes rares</li>
+          <li>Aucun export production (ONNX)</li>
+        </ul>
+        <p style="margin-top:12px"><strong>→ Ces limites motivent une 2ᵉ expérience améliorée.</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!--  PARTIE 2 — LES AMÉLIORATIONS APPORTÉES                              -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+
+  <!-- ── SLIDE 10 : Améliorations ─────────────────────────────────────── -->
+  <div class="slide">
+    <h2>🔧 Les Améliorations Apportées</h2>
+    <p class="subtitle" style="margin-bottom:20px">Optimisations de code &amp; d'entraînement entre l'expérience 1 et 2</p>
+    <div class="three-col">
+      <div class="card blue">
+        <h3 class="accent-blue">Augmentations avancées</h3>
+        <ul>
+          <li><strong>Mixup</strong> &amp; <strong>Copy-Paste</strong></li>
+          <li>Rotation, perspective, shear</li>
+          <li><code>cls_pw</code> pour les classes rares</li>
+        </ul>
+      </div>
+      <div class="card orange">
+        <h3 class="accent-orange">Optimisation entraînement</h3>
+        <ul>
+          <li>Optimiseur <strong>AdamW</strong></li>
+          <li><strong>Cosine LR</strong> + warmup</li>
+          <li><strong>close_mosaic</strong> en fin d'entraînement</li>
+        </ul>
       </div>
       <div class="card green">
-        <h3 class="accent-green">Verdict</h3>
-        <p>Performances finales identiques, mais :</p>
-        <br/>
+        <h3 class="accent-green">Stratégie YOLOv8</h3>
         <ul>
-          <li>YOLOv8s plus <strong>stable</strong></li>
-          <li>Convergence <strong>plus rapide</strong></li>
-          <li>Moins de variance en cours d'entraînement</li>
+          <li>Fine-tuning en <strong>2 phases</strong></li>
+          <li>Phase 1 : backbone gelé</li>
+          <li>Phase 2 : réseau complet dégelé</li>
         </ul>
       </div>
     </div>
-    <div class="card" style="margin-top: 20px">
-      <p><strong>Interprétation :</strong> Les deux modèles apprennent à détecter les 20 classes VOC avec une précision et un rappel excellents. La différence clé est la <strong>stabilité de convergence</strong> — YOLOv8s bénéficie d'améliorations architecturales (anchorless detection, C2f blocks) qui stabilisent l'apprentissage.</p>
+    <div class="three-col" style="margin-top:20px">
+      <div class="card purple">
+        <h3 class="accent-purple">Analyses ajoutées</h3>
+        <ul>
+          <li>Distribution des classes</li>
+          <li>mAP par classe</li>
+          <li>Courbe <strong>F1-Score</strong></li>
+        </ul>
+      </div>
+      <div class="card purple">
+        <h3 class="accent-purple">Robustesse du code</h3>
+        <ul>
+          <li>Runs <strong>horodatés</strong> (historique)</li>
+          <li>Reprise auto. via checkpoints</li>
+          <li>Chemins relatifs portables</li>
+        </ul>
+      </div>
+      <div class="card purple">
+        <h3 class="accent-purple">Production</h3>
+        <ul>
+          <li>Export <strong>ONNX</strong></li>
+          <li>Benchmark ONNX Runtime</li>
+          <li>Radar de synthèse</li>
+        </ul>
+      </div>
     </div>
   </div>
 
-  <!-- ── SLIDE 10 : Vitesse graph ──────────────────────────────────────── -->
-  <div class="slide">
-    <h2>Vitesse d'Inférence</h2>
-    <div class="img-container">
-      <img src="image/speed_comparison.png" alt="Vitesse d'inférence" />
-    </div>
-  </div>
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!--  PARTIE 3 — DEUXIÈME EXPÉRIENCE (version améliorée)                  -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
 
-  <!-- ── SLIDE 11 : Analyse vitesse ───────────────────────────────────── -->
+  <!-- ── SLIDE 11 : Intro Expérience 2 ────────────────────────────────── -->
   <div class="slide">
-    <h2>Analyse — Vitesse d'Inférence</h2>
+    <h2><span class="accent-green">Expérience 2</span> — Version Améliorée</h2>
     <div class="two-col">
-      <div>
-        <div class="card blue" style="margin-bottom:16px">
-          <h3 class="accent-blue">YOLOv5s — Plus rapide</h3>
-          <div class="stat-number accent-blue">13.7 ms</div>
-          <p style="margin-top:6px">73.3 FPS</p>
-          <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:73%; background:#64b5f6"></div></div>
-        </div>
-        <div class="card orange">
-          <h3 class="accent-orange">YOLOv8s — Plus lent</h3>
-          <div class="stat-number accent-orange">17.7 ms</div>
-          <p style="margin-top:6px">56.5 FPS</p>
-          <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:56%; background:#ff8a65"></div></div>
-        </div>
+      <div class="card">
+        <h3>🎯 Objectif</h3>
+        <p>Ré-entraîner les deux modèles avec toutes les optimisations, pour un résultat <strong>plus robuste, plus réaliste et exploitable en production</strong>.</p>
+        <br/>
+        <p>Mesure d'impact via des analyses fines (F1, mAP par classe, radar).</p>
       </div>
       <div class="card">
-        <h3>💡 Analyse</h3>
-        <p><strong>YOLOv5s est ~29% plus rapide</strong> (4ms de différence).</p>
-        <br/>
-        <p>Cohérent avec l'écart de paramètres :</p>
-        <ul style="margin: 8px 0">
-          <li>YOLOv5s : 7.2M params</li>
-          <li>YOLOv8s : 11.2M params (+55%)</li>
+        <h3>⚙️ Configuration</h3>
+        <ul>
+          <li>100 epochs — batch 128 — 640×640 px</li>
+          <li>Optimiseur <strong>AdamW</strong> + Cosine LR + warmup</li>
+          <li>Augmentations avancées (Mixup, Copy-Paste…)</li>
+          <li>YOLOv8 : fine-tuning 2 phases</li>
+          <li>GPU NVIDIA A40 — run <code>20260710_135430</code></li>
         </ul>
-        <br/>
-        <p style="font-size:.9rem; opacity:.7">⚠️ Ce benchmark inclut preprocessing Python + API overhead. Avec <strong>TensorRT ou ONNX</strong>, les deux modèles dépasseraient 100+ FPS et l'écart relatif serait réduit.</p>
-        <br/>
-        <p>Les deux modèles sont largement utilisables en <strong>temps réel</strong> (≥ 25 FPS requis).</p>
       </div>
+    </div>
+    <div class="three-col" style="margin-top:20px">
+      <div class="card green"><div class="stat-number accent-green">AdamW</div><div class="stat-label">Optimiseur</div></div>
+      <div class="card green"><div class="stat-number accent-green">Cosine</div><div class="stat-label">LR decay</div></div>
+      <div class="card green"><div class="stat-number accent-green">2 phases</div><div class="stat-label">Fine-tuning v8</div></div>
     </div>
   </div>
 
-  <!-- ── SLIDE 12 : Tableau récap ──────────────────────────────────────── -->
+  <!-- ── SLIDE 12 : Exp2 mAP graph ────────────────────────────────────── -->
   <div class="slide">
-    <h2>Tableau Récapitulatif</h2>
+    <h2><span class="accent-green">Exp 2</span> — Comparaison mAP</h2>
+    <div class="img-container">
+      <img src="image/ameliored/map_comparison%20(1).png" alt="Exp2 — Comparaison mAP" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 13 : Exp2 Loss graph ───────────────────────────────────── -->
+  <div class="slide">
+    <h2><span class="accent-green">Exp 2</span> — Courbes de Loss</h2>
+    <div class="img-container">
+      <img src="image/ameliored/loss_comparison%20(1).png" alt="Exp2 — Courbes de Loss" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 14 : Exp2 Précision/Rappel graph ───────────────────────── -->
+  <div class="slide">
+    <h2><span class="accent-green">Exp 2</span> — Précision &amp; Rappel</h2>
+    <div class="img-container">
+      <img src="image/ameliored/precision_recall_comparison%20(1).png" alt="Exp2 — Précision et Rappel" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 15 : Exp2 F1-Score graph ───────────────────────────────── -->
+  <div class="slide">
+    <h2><span class="accent-green">Exp 2</span> — Courbe F1-Score <span style="font-size:1rem; opacity:.6">(nouvelle analyse)</span></h2>
+    <div class="img-container">
+      <img src="image/ameliored/f1_comparison.png" alt="Exp2 — Courbe F1-Score" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 16 : Exp2 Vitesse graph ────────────────────────────────── -->
+  <div class="slide">
+    <h2><span class="accent-green">Exp 2</span> — Vitesse d'Inférence</h2>
+    <div class="img-container">
+      <img src="image/ameliored/speed_comparison%20(1).png" alt="Exp2 — Vitesse d'inférence" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 17 : Exp2 Radar ────────────────────────────────────────── -->
+  <div class="slide">
+    <h2><span class="accent-green">Exp 2</span> — Synthèse Radar</h2>
+    <div class="img-container">
+      <img src="image/ameliored/radar_comparison.png" alt="Exp2 — Radar de synthèse" />
+    </div>
+  </div>
+
+  <!-- ── SLIDE 18 : Exp2 Tableau récap ────────────────────────────────── -->
+  <div class="slide">
+    <h2><span class="accent-green">Exp 2</span> — Tableau Récapitulatif</h2>
     <table>
       <thead>
         <tr>
@@ -474,90 +545,80 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td><strong>mAP50 final</strong></td>
-          <td>~99%</td>
-          <td>~99%</td>
-          <td class="eq">Égalité</td>
-        </tr>
-        <tr>
-          <td><strong>mAP50-95 final</strong></td>
-          <td>~85%</td>
-          <td>~99%</td>
-          <td class="win">YOLOv8s +14pts</td>
-        </tr>
-        <tr>
-          <td><strong>Précision finale</strong></td>
-          <td>~99%</td>
-          <td>~99%</td>
-          <td class="eq">Égalité</td>
-        </tr>
-        <tr>
-          <td><strong>Rappel final</strong></td>
-          <td>~99%</td>
-          <td>~99%</td>
-          <td class="eq">Égalité</td>
-        </tr>
-        <tr>
-          <td><strong>Temps inférence</strong></td>
-          <td>13.7 ms</td>
-          <td>17.7 ms</td>
-          <td class="win">YOLOv5s −29%</td>
-        </tr>
-        <tr>
-          <td><strong>FPS</strong></td>
-          <td>73.3</td>
-          <td>56.5</td>
-          <td class="win">YOLOv5s +16.8 FPS</td>
-        </tr>
-        <tr>
-          <td><strong>Stabilité convergence</strong></td>
-          <td>Oscillations</td>
-          <td>Stable</td>
-          <td class="win">YOLOv8s</td>
-        </tr>
-        <tr>
-          <td><strong>Paramètres</strong></td>
-          <td>7.2M</td>
-          <td>11.2M</td>
-          <td class="win">YOLOv5s (léger)</td>
-        </tr>
+        <tr><td><strong>mAP50 (best)</strong></td><td>99.00%</td><td>98.24%</td><td class="win">YOLOv5s</td></tr>
+        <tr><td><strong>mAP50-95</strong></td><td>76.82%</td><td>77.00%</td><td class="win">YOLOv8s</td></tr>
+        <tr><td><strong>Précision</strong></td><td>96.74%</td><td>95.71%</td><td class="win">YOLOv5s</td></tr>
+        <tr><td><strong>Rappel</strong></td><td>96.27%</td><td>94.00%</td><td class="win">YOLOv5s</td></tr>
+        <tr><td><strong>F1 (max)</strong></td><td>96.77%</td><td>94.84%</td><td class="win">YOLOv5s</td></tr>
+        <tr><td><strong>Temps inférence</strong></td><td>19.73 ms</td><td>17.83 ms</td><td class="win">YOLOv8s</td></tr>
+        <tr><td><strong>FPS</strong></td><td>50.7</td><td>56.1</td><td class="win">YOLOv8s</td></tr>
       </tbody>
     </table>
+    <p class="subtitle" style="margin-top:16px; font-size:.95rem">Après optimisation, les scores sont plus <strong>réalistes</strong> : mAP50-95 ~77% pour les deux, écarts resserrés et équilibrés.</p>
   </div>
 
-  <!-- ── SLIDE 13 : Conclusion ──────────────────────────────────────────── -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!--  PARTIE 4 — CONCLUSION FINALE DES DEUX EXPÉRIENCES                   -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+
+  <!-- ── SLIDE 19 : Comparaison Exp1 vs Exp2 ──────────────────────────── -->
   <div class="slide">
-    <h2>Conclusion</h2>
+    <h2>Expérience 1 vs Expérience 2</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th class="accent-purple">Exp 1 — Référence</th>
+          <th class="accent-green">Exp 2 — Améliorée</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Optimiseur</td><td>SGD (défaut)</td><td>AdamW + Cosine LR + warmup</td></tr>
+        <tr><td>Augmentations</td><td>Standard</td><td>Mixup, Copy-Paste, perspective…</td></tr>
+        <tr><td>Fine-tuning v8</td><td>Direct</td><td>2 phases (freeze → unfreeze)</td></tr>
+        <tr><td>mAP50-95</td><td>Écart marqué v5/v8</td><td>Équilibré (~77% les deux)</td></tr>
+        <tr><td>Analyses</td><td>Basiques</td><td>+ F1, mAP/classe, radar, distribution</td></tr>
+        <tr><td>Production</td><td>Aucune</td><td>Export ONNX + benchmark</td></tr>
+        <tr><td>Reproductibilité</td><td>Run unique</td><td>Runs horodatés + reprise auto.</td></tr>
+      </tbody>
+    </table>
+    <div class="card" style="margin-top:18px">
+      <p><strong>Apport des améliorations :</strong> une convergence plus stable, des métriques plus réalistes et exploitables, une analyse bien plus riche et un pipeline prêt pour la production.</p>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 20 : Conclusion finale ─────────────────────────────────── -->
+  <div class="slide">
+    <h2>Conclusion Finale</h2>
     <div class="two-col">
       <div>
-        <div class="verdict">
-          <span class="verdict-icon">🏆</span>
+        <div class="verdict" style="background: rgba(33,150,243,0.1); border-color: rgba(33,150,243,.35)">
+          <span class="verdict-icon">🎯</span>
           <div>
-            <strong class="accent-orange">YOLOv8s recommandé</strong> si la <strong>qualité de localisation</strong> est prioritaire — mAP50-95 supérieur de 14 points grâce à DFL.
+            <strong class="accent-blue">YOLOv5s</strong> — meilleur en <strong>précision, rappel et F1</strong> après optimisation (F1 96.8%). Idéal quand la fiabilité de détection prime.
           </div>
         </div>
-        <div class="verdict" style="background: rgba(33,150,243,0.1); border-color: rgba(33,150,243,.35); margin-top:12px">
+        <div class="verdict" style="background: rgba(255,87,34,0.1); border-color: rgba(255,87,34,.35); margin-top:12px">
           <span class="verdict-icon">⚡</span>
           <div>
-            <strong class="accent-blue">YOLOv5s recommandé</strong> pour les applications <strong>temps-réel contraintes</strong> — 29% plus rapide, moins de mémoire.
+            <strong class="accent-orange">YOLOv8s</strong> — plus <strong>rapide</strong> (56 FPS) et légèrement meilleur en <strong>mAP50-95</strong> grâce à DFL. Idéal pour le temps réel et la localisation fine.
           </div>
         </div>
         <div class="verdict" style="background: rgba(124,131,253,0.1); border-color: rgba(124,131,253,.35); margin-top:12px">
           <span class="verdict-icon">🔬</span>
           <div>
-            Sur <strong>VOC 2007 simple</strong>, les deux atteignent ~99% mAP50 — la différence devient critique sur des <strong>datasets plus complexes</strong> (COCO, objets petits).
+            Les <strong>améliorations de code</strong> (AdamW, augmentations, 2 phases) ont apporté des résultats plus <strong>stables et réalistes</strong> que la baseline.
           </div>
         </div>
       </div>
       <div class="card">
         <h3>📌 Points clés à retenir</h3>
         <ul style="margin-top: 12px">
-          <li style="margin-bottom: 12px"><strong>mAP50-95 ≠ mAP50</strong> — La localisation fine différencie vraiment les architectures</li>
-          <li style="margin-bottom: 12px"><strong>DFL</strong> (YOLOv8) = meilleure précision géométrique des boîtes</li>
-          <li style="margin-bottom: 12px"><strong>Les loss ne sont pas comparables</strong> entre YOLOv5 et YOLOv8 (échelles différentes)</li>
-          <li style="margin-bottom: 12px"><strong>+4 ans</strong> d'évolution architecturale justifient la différence de performance</li>
-          <li>YOLOv8s = meilleur choix général pour <strong>nouveaux projets</strong></li>
+          <li style="margin-bottom: 12px"><strong>Sur VOC 2007</strong>, les deux modèles sont excellents (~99% mAP50)</li>
+          <li style="margin-bottom: 12px"><strong>Le choix dépend du besoin</strong> : précision (v5) vs vitesse &amp; localisation (v8)</li>
+          <li style="margin-bottom: 12px"><strong>La méthodologie compte</strong> autant que l'architecture — l'exp 2 le démontre</li>
+          <li style="margin-bottom: 12px"><strong>Augmentations + AdamW + 2 phases</strong> = convergence stable</li>
+          <li><strong>Export ONNX</strong> rend les modèles prêts pour la production</li>
         </ul>
       </div>
     </div>
@@ -568,7 +629,7 @@
 <!-- ── Navigation ─────────────────────────────────────────────────────── -->
 <div class="nav">
   <button onclick="prevSlide()">← Précédent</button>
-  <span class="counter" id="counter">1 / 13</span>
+  <span class="counter" id="counter">1 / 20</span>
   <button onclick="nextSlide()">Suivant →</button>
 </div>
 
